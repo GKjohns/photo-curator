@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Photo Curator</title>
+<style>
+:root{--bg:#f4f3f0;--panel:#ffffff;--fg:#1d1d1f;--muted:#6b6b70;--line:#dddbd5;--accent:#8a5a2b;--accent-fg:#fff;--bar:#e8e5df;--chip:#efe9e0;--stage:#151515;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121212;--panel:#1c1c1e;--fg:#ececec;--muted:#9a9aa0;--line:#2e2e31;--accent:#d9a46c;--accent-fg:#1a1208;--bar:#2c2c2f;--chip:#2a241d;--stage:#0a0a0a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121212;--panel:#1c1c1e;--fg:#ececec;--muted:#9a9aa0;--line:#2e2e31;--accent:#d9a46c;--accent-fg:#1a1208;--bar:#2c2c2f;--chip:#2a241d;--stage:#0a0a0a;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1500px;margin:0 auto;padding:24px 16px 64px}
+header{display:grid;gap:10px;margin-bottom:18px}
+h1{font:600 clamp(1.6rem,4vw,2.4rem)/1.15 Georgia,"Times New Roman",serif;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:0;max-width:75ch}
+.funnel{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.funnel b{color:var(--fg);font-weight:600}
+.funnel .arr{opacity:.5}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{background:var(--chip);border-radius:99px;padding:1px 10px;font-size:.8rem;white-space:nowrap}
+.notes{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:.9rem;max-width:90ch}
+nav.tabs{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:4px;border-bottom:1px solid var(--line);margin:8px 0 18px;padding-top:8px;overflow-x:auto}
+nav.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 14px;color:var(--muted);white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--fg);border-color:var(--accent);font-weight:600}
+nav.tabs .sp{flex:1}
+nav.tabs .theme{border:1px solid var(--line);border-radius:6px;padding:4px 10px;margin-bottom:6px;font-size:.8rem;background:var(--panel)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),1fr));gap:16px;align-items:start}
+.grid.small{grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:12px}
+.card{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;display:block;width:100%;text-align:left;padding:0}
+.card .ph{position:relative;background:var(--stage)}
+.card img{display:block;width:100%;height:auto}
+.card .rank{position:absolute;top:10px;left:10px;background:var(--accent);color:var(--accent-fg);font-weight:700;border-radius:6px;padding:0 9px;font-variant-numeric:tabular-nums}
+.card .score{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.65);color:#fff;border-radius:6px;padding:0 8px;font-size:.85rem;font-variant-numeric:tabular-nums}
+.card .body{padding:10px 12px 12px;display:grid;gap:4px}
+.card h3{margin:0;font-size:1rem;line-height:1.3}
+.card p{margin:0;color:var(--muted);font-size:.85rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.grid.small .card p{-webkit-line-clamp:2}
+.card .tags{display:flex;gap:6px;flex-wrap:wrap;font-size:.75rem;color:var(--muted)}
+.empty{padding:60px 0;text-align:center;color:var(--muted)}
+/* lightbox */
+#lb{position:fixed;inset:0;z-index:20;background:var(--bg);display:none;grid-template-columns:1fr minmax(320px,400px)}
+#lb.open{display:grid}
+.stage{position:relative;background:var(--stage);display:flex;align-items:center;justify-content:center;min-height:0;min-width:0;overflow:hidden}
+.stage img{max-width:100%;max-height:100%;display:block;user-select:none;-webkit-user-drag:none}
+.ba{position:relative;max-width:100%;max-height:100%;touch-action:none;cursor:ew-resize}
+.ba img.top{position:absolute;inset:0;width:100%;height:100%}
+.ba .bar{position:absolute;top:0;bottom:0;width:2px;background:#fff;box-shadow:0 0 4px rgba(0,0,0,.6);pointer-events:none}
+.ba .bar::after{content:"\2194";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;color:#111;border-radius:99px;width:30px;height:30px;display:grid;place-items:center;font-size:16px}
+.ba .lab{position:absolute;top:10px;background:rgba(0,0,0,.6);color:#fff;font-size:.75rem;padding:2px 8px;border-radius:4px;pointer-events:none}
+.modes{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;background:rgba(0,0,0,.55);border-radius:8px;padding:3px;gap:2px;z-index:2}
+.modes button{background:none;border:0;color:#ddd;padding:4px 12px;border-radius:6px;font-size:.85rem}
+.modes button[aria-pressed="true"]{background:#fff;color:#111}
+.nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);color:#fff;border:0;width:44px;height:64px;font-size:28px;border-radius:6px;z-index:2}
+.nav.prev{left:10px}.nav.next{right:10px}
+.nav:disabled{opacity:.25;cursor:default}
+.side{border-left:1px solid var(--line);background:var(--panel);overflow-y:auto;padding:16px 18px 32px;display:grid;gap:14px;align-content:start}
+.side .top{display:flex;align-items:center;gap:8px}
+.side .top .x{margin-left:auto;background:none;border:1px solid var(--line);border-radius:6px;width:34px;height:34px;font-size:18px}
+.side h2{margin:0;font:600 1.35rem/1.25 Georgia,"Times New Roman",serif}
+.side h4{margin:0 0 4px;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.side p{margin:0}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:5px 10px;align-items:center;font-size:.85rem}
+.bars .track{height:8px;background:var(--bar);border-radius:99px;overflow:hidden}
+.bars .fill{height:100%;background:var(--accent);border-radius:99px}
+.bars .v{font-variant-numeric:tabular-nums;color:var(--muted)}
+.bars .overall{font-weight:600}
+dl.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0;font-size:.82rem}
+dl.kv dt{color:var(--muted)}dl.kv dd{margin:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.path{display:flex;gap:6px;align-items:flex-start}
+.path code{flex:1;min-width:0;font:.75rem ui-monospace,Menlo,monospace;overflow-wrap:anywhere;background:var(--bg);padding:4px 6px;border-radius:4px}
+.path button{background:none;border:1px solid var(--line);border-radius:4px;font-size:.75rem;padding:3px 8px}
+details summary{cursor:pointer;font-size:.85rem;color:var(--muted)}
+.keys{font-size:.75rem;color:var(--muted)}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;font:.7rem ui-monospace,Menlo,monospace}
+@media (max-width:860px){
+  #lb{grid-template-columns:1fr;grid-template-rows:60vh auto;overflow-y:auto}
+  .side{border-left:0;border-top:1px solid var(--line);overflow:visible}
+  .grid.small{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">Photo Curator</h1>
+    <p class="sub" id="sub"></p>
+    <div class="funnel" id="funnel"></div>
+    <div class="meta-row" id="meta"></div>
+    <div class="notes" id="notes" hidden></div>
+  </header>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+  <main id="view"></main>
+</div>
+
+<div id="lb" role="dialog" aria-modal="true" aria-label="Photo detail">
+  <div class="stage" id="stage">
+    <div class="modes" id="modes"></div>
+    <button class="nav prev" id="prev" aria-label="Previous">&#8249;</button>
+    <div id="canvas"></div>
+    <button class="nav next" id="next" aria-label="Next">&#8250;</button>
+  </div>
+  <aside class="side" id="side"></aside>
+</div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent)
+const $ = s => document.querySelector(s)
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+const src = p => p ? p.split('/').map(encodeURIComponent).join('/') : ''
+const TABS = [
+  { key: 'picks', label: 'Picks', small: false },
+  { key: 'alternates', label: 'Alternates', small: true },
+  { key: 'close', label: 'Close calls', small: true }
+]
+const SCORE_LABELS = { composition: 'Composition', light_color: 'Light & colour', moment_emotion: 'Moment', technical: 'Technical', uniqueness: 'Uniqueness', impact: 'Impact', overall: 'Overall' }
+let tab = 'picks', list = [], idx = -1, mode = 'edited'
+try { const t = localStorage.getItem('pc-theme'); if (t) document.documentElement.dataset.theme = t } catch (e) {}
+
+function header() {
+  const n = (D.picks || []).length
+  $('#title').textContent = D.title || `${n} keepers`
+  document.title = (D.title || 'Photo Curator')
+  $('#sub').textContent = `Chosen for ${D.goal || 'your goal'} from ${D.funnel?.[0]?.n ?? '?'} photos across ${D.shoots ?? '?'} shoots. Click any photo for the edit, a before/after slider, the curator's reasoning and the scores.`
+  $('#funnel').innerHTML = (D.funnel || []).map((f, i) => `${i ? '<span class="arr">&rarr;</span>' : ''}<span><b>${f.n.toLocaleString()}</b> ${esc(f.label.toLowerCase())}</span>`).join(' ')
+  const cost = D.cost?.total ? `$${D.cost.total.toFixed(2)} model spend` : 'no model spend'
+  $('#meta').innerHTML = [`curator: ${esc(D.curator || 'manual')}`, cost, `built ${esc(D.generated || '')}`].map(t => `<span class="chip">${t}</span>`).join('')
+  if (D.notes) { $('#notes').hidden = false; $('#notes').textContent = D.notes }
+}
+
+function tabs() {
+  $('#tabs').innerHTML = TABS.map(t => `<button role="tab" aria-selected="${t.key === tab}" data-k="${t.key}">${t.label} (${(D[t.key] || []).length})</button>`).join('')
+    + '<span class="sp"></span><button class="theme" id="theme" title="Toggle light/dark">Theme</button>'
+  $('#tabs').querySelectorAll('[role=tab]').forEach(b => b.onclick = () => { tab = b.dataset.k; render() })
+  $('#theme').onclick = () => {
+    const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    const next = cur === 'dark' ? 'light' : 'dark'
+    document.documentElement.dataset.theme = next
+    try { localStorage.setItem('pc-theme', next) } catch (e) {}
+  }
+}
+
+const img = it => it.images?.edited || it.images?.large || it.images?.thumb
+
+function card(it, i, small) {
+  const s = it.scores?.overall
+  return `<button class="card" data-i="${i}" aria-label="Open ${esc(it.title)}">
+    <div class="ph"><img loading="lazy" src="${src(small ? (it.images?.thumb || img(it)) : img(it))}" alt="${esc(it.title)}">
+      ${it.rank && it.kind === 'pick' ? `<span class="rank">${it.rank}</span>` : ''}${s != null ? `<span class="score">${s}/10</span>` : ''}</div>
+    <div class="body"><h3>${esc(it.title || 'Untitled')}</h3><p>${esc(it.why)}</p>
+      <div class="tags">${[it.category, it.shoot, it.print_size && !small ? it.print_size : ''].filter(Boolean).map(esc).join(' &middot; ')}</div></div>
+  </button>`
+}
+
+function render() {
+  tabs()
+  const t = TABS.find(t => t.key === tab)
+  list = D[tab] || []
+  $('#view').innerHTML = D.missing
+    ? `<p class="empty">No index.json found. Run the pipeline, then <code>build_index.py</code>.</p>`
+    : list.length ? `<div class="grid${t.small ? ' small' : ''}">${list.map((it, i) => card(it, i, t.small)).join('')}</div>`
+      : `<p class="empty">Nothing here yet.</p>`
+  $('#view').querySelectorAll('.card').forEach(c => c.onclick = () => open(+c.dataset.i))
+}
+
+function open(i) {
+  idx = i
+  const it = list[idx]
+  if (!it.images?.edited && mode !== 'original') mode = 'original'
+  $('#lb').classList.add('open')
+  document.body.style.overflow = 'hidden'
+  draw()
+}
+function close() { $('#lb').classList.remove('open'); document.body.style.overflow = ''; idx = -1 }
+
+function modes(it) {
+  const m = [['edited', 'Edited'], ['ba', 'Before / after'], ['original', 'Original']].filter(([k]) => k === 'original' || it.images?.edited)
+  if (!m.find(([k]) => k === mode)) mode = m[0][0]
+  $('#modes').innerHTML = m.map(([k, l]) => `<button aria-pressed="${k === mode}" data-m="${k}">${l}</button>`).join('')
+  $('#modes').querySelectorAll('button').forEach(b => b.onclick = () => { mode = b.dataset.m; draw() })
+  $('#modes').style.display = m.length > 1 ? '' : 'none'
+}
+
+function stage(it) {
+  const c = $('#canvas')
+  if (mode === 'ba' && it.images?.before) {
+    c.innerHTML = `<div class="ba" id="ba"><img src="${src(it.images.edited)}" alt="Edited"><img class="top" id="baTop" src="${src(it.images.before)}" alt="Before">
+      <div class="bar" id="baBar"></div><span class="lab" style="left:10px">Before</span><span class="lab" style="right:10px">After</span></div>`
+    const ba = $('#ba'), top = $('#baTop'), bar = $('#baBar')
+    const set = p => { p = Math.max(0, Math.min(100, p)); top.style.clipPath = `inset(0 ${100 - p}% 0 0)`; bar.style.left = p + '%' }
+    set(50)
+    let drag = false
+    const mv = e => { const r = ba.getBoundingClientRect(); set((e.clientX - r.left) / r.width * 100) }
+    ba.onpointerdown = e => { drag = true; ba.setPointerCapture(e.pointerId); mv(e) }
+    ba.onpointermove = e => drag && mv(e)
+    ba.onpointerup = () => { drag = false }
+    const fit = () => { const s = $('#stage').getBoundingClientRect(); const im = ba.querySelector('img'); if (!im.naturalWidth) return
+      const k = Math.min(s.width / im.naturalWidth, s.height / im.naturalHeight, 1); ba.style.width = im.naturalWidth * k + 'px'; ba.style.height = im.naturalHeight * k + 'px'; im.style.width = '100%'; im.style.height = '100%' }
+    ba.querySelector('img').onload = fit; fit()
+  } else {
+    const p = mode === 'original' ? (it.images?.large || it.images?.thumb) : img(it)
+    c.innerHTML = `<img src="${src(p)}" alt="${esc(it.title)}">`
+    c.style.cssText = 'display:flex;align-items:center;justify-content:center;width:100%;height:100%'
+  }
+}
+
+function bars(sc) {
+  if (!sc) return ''
+  const keys = Object.keys(SCORE_LABELS).filter(k => sc[k] != null)
+  return `<div><h4>Scores</h4><div class="bars">${keys.map(k => `<span class="${k === 'overall' ? 'overall' : ''}">${SCORE_LABELS[k]}</span>
+    <div class="track"><div class="fill" style="width:${sc[k] * 10}%"></div></div><span class="v">${sc[k]}</span>`).join('')}</div></div>`
+}
+
+function kv(rows) {
+  rows = rows.filter(([, v]) => v !== '' && v != null)
+  return rows.length ? `<dl class="kv">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : ''
+}
+
+function pathRow(label, p) {
+  return p ? `<div><h4>${label}</h4><div class="path"><code>${esc(p)}</code><button data-copy="${esc(p)}">Copy</button></div></div>` : ''
+}
+
+function side(it) {
+  const kind = { pick: `Pick #${it.rank}`, alternate: 'Alternate', close: 'Close call' }[it.kind] || ''
+  const e = it.edit || {}
+  const m = it.metrics || {}
+  $('#side').innerHTML = `
+    <div class="top"><span class="chip">${esc(kind)}</span><span class="keys">${idx + 1} / ${list.length}</span><button class="x" id="x" aria-label="Close">&times;</button></div>
+    <h2>${esc(it.title || 'Untitled')}</h2>
+    ${it.why ? `<div><h4>Curator</h4><p>${esc(it.why)}</p></div>` : ''}
+    ${it.rubric_why ? `<div><h4>Rubric critique</h4><p>${esc(it.rubric_why)}</p></div>` : ''}
+    ${bars(it.scores)}
+    ${it.edit_plan ? `<div><h4>Edit plan</h4><p>${esc(it.edit_plan)}</p></div>` : ''}
+    <div><h4>Details</h4>${kv([['Category', it.category], ['Shoot', it.shoot], ['Date', it.date], ['Camera', it.camera], ['Pixels', it.dims],
+      ['Crop', it.crop], ['Print up to', it.print_size], ['Edited from', it.edited_from ? (it.raw_source && it.edited_from === it.raw_source ? 'RAW' : 'JPEG') : ''],
+      ['Tagger', it.tag ? `${it.tag.scene ?? ''}${it.tag.keeper_score ? `, keeper ${it.tag.keeper_score}/10` : ''}` : ''], ['People', it.tag?.people_of_interest]])}</div>
+    ${pathRow('Edited file', it.images?.full)}
+    ${pathRow('Source', it.source)}
+    ${it.raw_source && it.raw_source !== it.source ? pathRow('RAW', it.raw_source) : ''}
+    ${Object.keys(e).length ? `<details><summary>Edit settings</summary>${kv([['Rotate', e.rotate != null ? `${e.rotate}°` : ''], ['Aspect', e.aspect], ['Exposure', e.ev != null ? `${e.ev > 0 ? '+' : ''}${e.ev} EV` : ''],
+      ['Temp / tint', e.temp != null ? `${e.temp} / ${e.tint}` : ''], ['Contrast', e.contrast], ['Vibrance', e.vib], ['Sharpen', e.sharp_amt]])}</details>` : ''}
+    ${Object.keys(m).length ? `<details><summary>Technical metrics</summary>${kv([['Sharpness', m.sharpness], ['Mean luma', m.mean_luma], ['Clipped highlights %', m.clip_hi_pct],
+      ['Clipped shadows %', m.clip_lo_pct], ['Colourfulness', m.colorfulness], ['Faces', m.faces], ['Long side', m.long_side], ['Technical score', m.tech_score]])}</details>` : ''}
+    <p class="keys"><kbd>&larr;</kbd> <kbd>&rarr;</kbd> browse &middot; <kbd>B</kbd> before/after &middot; <kbd>O</kbd> original &middot; <kbd>E</kbd> edited &middot; <kbd>Esc</kbd> close</p>`
+  $('#x').onclick = close
+  $('#side').querySelectorAll('[data-copy]').forEach(b => b.onclick = () => {
+    const done = () => { b.textContent = 'Copied'; setTimeout(() => (b.textContent = 'Copy'), 1200) }
+    try { navigator.clipboard.writeText(b.dataset.copy).then(done, () => {}) } catch (e) {}
+  })
+}
+
+function draw() {
+  const it = list[idx]
+  modes(it); stage(it); side(it)
+  $('#prev').disabled = idx <= 0
+  $('#next').disabled = idx >= list.length - 1
+}
+const step = d => { const n = idx + d; if (n >= 0 && n < list.length) { idx = n; draw() } }
+$('#prev').onclick = () => step(-1)
+$('#next').onclick = () => step(1)
+window.addEventListener('resize', () => { if (idx >= 0 && mode === 'ba') stage(list[idx]) })
+document.addEventListener('keydown', e => {
+  if (idx < 0) return
+  const it = list[idx]
+  if (e.key === 'Escape') close()
+  else if (e.key === 'ArrowRight') step(1)
+  else if (e.key === 'ArrowLeft') step(-1)
+  else if ((e.key === 'b' || e.key === 'B') && it.images?.before) { mode = 'ba'; draw() }
+  else if (e.key === 'o' || e.key === 'O') { mode = 'original'; draw() }
+  else if ((e.key === 'e' || e.key === 'E') && it.images?.edited) { mode = 'edited'; draw() }
+})
+header(); render()
+</script>
+</body>
+</html>

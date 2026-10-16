@@ -1,0 +1,22 @@
+{
+ "_doc": "Copy to <work>/config.json. Everything here is per run: exclusions and people are set by the user for this run only. See references/pipeline.md.",
+ "picks": 12,
+ "alternates": 8,
+ "goal": "wall prints",
+ "exclude_patterns": ["client_", "/(wedding|corporate|headshots)/"],
+ "exclude_descriptions": ["client portrait sessions", "screenshots and documents"],
+ "people": [
+  {"name": "Alex", "ref": "/path/to/a/clear/face/photo.jpg", "want": "prefer", "note": "my partner"}
+ ],
+ "aspect": "native",
+ "budget_usd": 10,
+ "min_long_side": 1600,
+ "taste_top": 300,
+ "shortlist": 60,
+ "per_shoot_cap": 0.25,
+ "models": {
+  "tag": "openai/gpt-6-luna",
+  "taste": "anthropic/claude-sonnet-5.5",
+  "curator": "anthropic/claude-opus-5.5"
+ }
+}

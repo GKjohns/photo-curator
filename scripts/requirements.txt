@@ -1,0 +1,7 @@
+numpy
+Pillow
+opencv-python-headless
+# RAW development and fast RAW previews (.ARW .CR3 .NEF .RAF .DNG ...)
+rawpy
+# HEIC/HEIF (iPhone) support
+pillow-heif

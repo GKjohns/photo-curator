@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+.DS_Store
+.env
+# never commit photos; the synthetic viewer sample is the one exception
+*.jpg
+*.JPG
+*.jpeg
+*.png
+*.heic
+*.arw
+*.ARW
+*.dng
+*.cr3
+*.nef
+!viewer/sample/**
